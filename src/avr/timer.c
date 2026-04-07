@@ -4,13 +4,62 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <avr/interrupt.h> // TCNT5
+#include <avr/interrupt.h> // SCHED_TIMER_TCNT
 #include "autoconf.h" // CONFIG_AVR_CLKPR
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
 #include "irq.h" // irq_save
 #include "sched.h" // sched_timer_dispatch
 
+// Scheduling timer register abstraction
+#if CONFIG_MACH_atmega2560 || CONFIG_MACH_atmega1280
+  #if CONFIG_AVR_SCHED_TIMER == 5
+    // Timer5 for scheduling
+    #define SCHED_TIMER_TCNT   TCNT5
+    #define SCHED_TIMER_OCRA   OCR5A
+    #define SCHED_TIMER_OCRB   OCR5B
+    #define SCHED_TIMER_TCCRA  TCCR5A
+    #define SCHED_TIMER_TCCRB  TCCR5B
+    #define SCHED_TIMER_TIFR   TIFR5
+    #define SCHED_TIMER_TIMSK  TIMSK5
+    #define SCHED_TIMER_TOV    TOV5
+    #define SCHED_TIMER_OCFA   OCF5A
+    #define SCHED_TIMER_OCFB   OCF5B
+    #define SCHED_TIMER_OCIE   OCIE5A
+    #define SCHED_TIMER_CS0    CS50
+    #define SCHED_TIMER_ISR    TIMER5_COMPA_vect
+  #else
+    // Timer1 for scheduling (default)
+    #define SCHED_TIMER_TCNT   TCNT1
+    #define SCHED_TIMER_OCRA   OCR1A
+    #define SCHED_TIMER_OCRB   OCR1B
+    #define SCHED_TIMER_TCCRA  TCCR1A
+    #define SCHED_TIMER_TCCRB  TCCR1B
+    #define SCHED_TIMER_TIFR   TIFR1
+    #define SCHED_TIMER_TIMSK  TIMSK1
+    #define SCHED_TIMER_TOV    TOV1
+    #define SCHED_TIMER_OCFA   OCF1A
+    #define SCHED_TIMER_OCFB   OCF1B
+    #define SCHED_TIMER_OCIE   OCIE1A
+    #define SCHED_TIMER_CS0    CS10
+    #define SCHED_TIMER_ISR    TIMER1_COMPA_vect
+  #endif
+#else
+  // Other AVR chips always use Timer1
+  #define SCHED_TIMER_TCNT   TCNT1
+  #define SCHED_TIMER_OCRA   OCR1A
+  #define SCHED_TIMER_OCRB   OCR1B
+  #define SCHED_TIMER_TCCRA  TCCR1A
+  #define SCHED_TIMER_TCCRB  TCCR1B
+  #define SCHED_TIMER_TIFR   TIFR1
+  #define SCHED_TIMER_TIMSK  TIMSK1
+  #define SCHED_TIMER_TOV    TOV1
+  #define SCHED_TIMER_OCFA   OCF1A
+  #define SCHED_TIMER_OCFB   OCF1B
+  #define SCHED_TIMER_OCIE   OCIE1A
+  #define SCHED_TIMER_CS0    CS10
+  #define SCHED_TIMER_ISR    TIMER1_COMPA_vect
+#endif
 
 /****************************************************************
  * Low level timer code
