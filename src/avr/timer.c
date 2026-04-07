@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <avr/interrupt.h> // TCNT1
+#include <avr/interrupt.h> // TCNT5
 #include "autoconf.h" // CONFIG_AVR_CLKPR
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
@@ -53,24 +53,24 @@ timer_is_before(uint32_t time1, uint32_t time2)
 static inline uint16_t
 timer_get(void)
 {
-    return TCNT1;
+    return TCNT5;
 }
 
 static inline void
 timer_set(uint16_t next)
 {
-    OCR1A = next;
+    OCR5A = next;
 }
 
 static inline void
 timer_repeat_set(uint16_t next)
 {
-    // Timer1B is used to limit the number of timers run from a timer1A irq
-    OCR1B = next;
-    // This is "TIFR1 = 1<<OCF1B" - gcc handles that poorly, so it's hand coded
+    // Timer5B is used to limit the number of timers run from a timer5A irq
+    OCR5B = next;
+    // This is "TIFR5 = 1<<OCF5B" - gcc handles that poorly, so it's hand coded
     uint8_t dummy;
     asm volatile("ldi %0, %2\n    out %1, %0"
-                 : "=d"(dummy) : "i"(&TIFR1 - 0x20), "i"(1<<OCF1B));
+                 : "=d"(dummy) : "i"(&TIFR5 - 0x20), "i"(1<<OCF5B));
 }
 
 // Activate timer dispatch as soon as possible
@@ -78,7 +78,7 @@ void
 timer_kick(void)
 {
     timer_set(timer_get() + 50);
-    TIFR1 = 1<<OCF1A;
+    TIFR5 = 1<<OCF5A;
 }
 
 static struct timer wrap_timer;
@@ -95,17 +95,17 @@ timer_init(void)
 {
     irqstatus_t flag = irq_save();
     // no outputs
-    TCCR1A = 0;
+    TCCR5A = 0;
     // Normal Mode
-    TCCR1B = 1<<CS10;
+    TCCR5B = 1<<CS50;
     // Setup for first irq
-    TCNT1 = 0;
+    TCNT5 = 0;
     timer_kick();
     timer_repeat_set(timer_get() + 50);
     timer_reset();
-    TIFR1 = 1<<TOV1;
+    TIFR5 = 1<<TOV5;
     // enable interrupt
-    TIMSK1 = 1<<OCIE1A;
+    TIMSK5 = 1<<OCIE5A;
     irq_restore(flag);
 }
 DECL_INIT(timer_init);
@@ -124,7 +124,7 @@ timer_read_time(void)
     irqstatus_t flag = irq_save();
     union u32_u calc = { .val = timer_get() };
     calc.hi = timer_high;
-    if (unlikely(TIFR1 & (1<<TOV1))) {
+    if (unlikely(TIFR5 & (1<<TOV5))) {
         irq_restore(flag);
         if (calc.b1 < 0xff)
             calc.hi++;
@@ -139,9 +139,9 @@ static uint_fast8_t
 timer_event(struct timer *t)
 {
     union u32_u *nextwake = (void*)&wrap_timer.waketime;
-    if (TIFR1 & (1<<TOV1)) {
+    if (TIFR5 & (1<<TOV5)) {
         // Hardware timer has overflowed - update overflow counter
-        TIFR1 = 1<<TOV1;
+        TIFR5 = 1<<TOV5;
         timer_high++;
         *nextwake = (union u32_u){ .hi = timer_high, .lo = 0x8000 };
     } else {
@@ -162,7 +162,7 @@ static struct timer wrap_timer = {
 #define TIMER_DEFER_REPEAT_TICKS 256
 
 // Hardware timer IRQ handler - dispatch software timers
-ISR(TIMER1_COMPA_vect)
+ISR(TIMER5_COMPA_vect)
 {
     uint16_t next;
     for (;;) {
@@ -174,7 +174,7 @@ ISR(TIMER1_COMPA_vect)
             if (likely(diff >= 0)) {
                 // Another timer is pending - briefly allow irqs and then run it
                 irq_enable();
-                if (unlikely(TIFR1 & (1<<OCF1B)))
+                if (unlikely(TIFR5 & (1<<OCF5B)))
                     goto check_defer;
                 irq_disable();
                 break;
@@ -185,7 +185,7 @@ ISR(TIMER1_COMPA_vect)
                 goto done;
 
             irq_enable();
-            if (unlikely(TIFR1 & (1<<OCF1B)))
+            if (unlikely(TIFR5 & (1<<OCF5B)))
                 goto check_defer;
             irq_disable();
             continue;

@@ -116,8 +116,8 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     uint8_t gpio_bit = GPIO2BIT(pin);
     struct gpio_pwm g = (struct gpio_pwm) {
         (void*)READP(p->ocr), flags & GP_8BIT };
-    if (rega == &TCCR1A)
-        shutdown("Can not use timer1 for PWM; timer1 is used for timers");
+    if (rega == &TCCR5A)
+        shutdown("Can not use timer5 for PWM; timer5 is used for timers");
 
     // Setup PWM timer
     irqstatus_t flag = irq_save();

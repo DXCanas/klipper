@@ -150,6 +150,28 @@ config SERIAL_PORT
     default 1 if AVR_SERIAL_UART1
     default 0
 
+choice
+    prompt "Scheduling timer" if LOW_LEVEL_OPTIONS && (MACH_atmega2560 || MACH_atmega1280)
+    default AVR_SCHED_TIMER_1
+    help
+        Select which 16-bit timer to use for Klipper's interrupt scheduling.
+
+        Timer1 (default): Standard choice. Blocks Timer1 pins from hardware PWM.
+        Timer5: Frees Timer1 pins (PB5/PB6/PB7) for hardware PWM, blocks Timer5 pins (PL3/PL4/PL5).
+
+        Most users should keep Timer1. Choose Timer5 only if you need hardware PWM on Timer1 pins
+        (e.g., heaters wired to OC1A/OC1B/OC1C).
+    config AVR_SCHED_TIMER_1
+        bool "Timer1 (default)"
+    config AVR_SCHED_TIMER_5
+        bool "Timer5"
+endchoice
+
+config AVR_SCHED_TIMER
+    int
+    default 5 if AVR_SCHED_TIMER_5
+    default 1
+
 config SIMULAVR
     depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
     bool "Compile for simulavr software emulation" if LOW_LEVEL_OPTIONS
