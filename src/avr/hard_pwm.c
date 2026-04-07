@@ -116,8 +116,14 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     uint8_t gpio_bit = GPIO2BIT(pin);
     struct gpio_pwm g = (struct gpio_pwm) {
         (void*)READP(p->ocr), flags & GP_8BIT };
+#if (CONFIG_MACH_atmega2560 || CONFIG_MACH_atmega1280) \
+    && CONFIG_AVR_SCHED_TIMER == 5
     if (rega == &TCCR5A)
-        shutdown("Can not use timer5 for PWM; timer5 is used for timers");
+        shutdown("Can not use timer5 for PWM; timer5 is used for scheduling");
+#else
+    if (rega == &TCCR1A)
+        shutdown("Can not use timer1 for PWM; timer1 is used for scheduling");
+#endif
 
     // Setup PWM timer
     irqstatus_t flag = irq_save();
