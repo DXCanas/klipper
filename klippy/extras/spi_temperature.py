@@ -13,7 +13,6 @@ from . import bus
 ######################################################################
 
 REPORT_TIME = 0.300
-MAX_INVALID_COUNT = 3
 
 class SensorBase:
     def __init__(self, config, chip_type, config_cmd=None, spi_mode=1):
@@ -21,6 +20,7 @@ class SensorBase:
         self.chip_type = chip_type
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
+        self.max_invalid_count = config.getint('max_invalid_count', 3, minval=1)
         self._report_clock = 0
         self.spi = bus.MCU_SPI_from_config(
             config, spi_mode, pin_option="sensor_pin", default_speed=4000000)
@@ -52,7 +52,7 @@ class SensorBase:
             " min_value=%u max_value=%u max_invalid_count=%u" % (
                 self.oid, clock, self._report_clock,
                 self.min_sample_value, self.max_sample_value,
-                MAX_INVALID_COUNT), is_init=True)
+                self.max_invalid_count), is_init=True)
     def _handle_spi_response(self, params):
         if params['fault']:
             self.handle_fault(params['value'], params['fault'])

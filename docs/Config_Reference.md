@@ -2971,6 +2971,11 @@ sensor_pin:
 #spi_speed: 4000000
 #   The SPI speed (in hz) to use when communicating with the chip.
 #   The default is 4000000.
+#max_invalid_count: 3
+#   The maximum number of consecutive invalid readings before
+#   triggering a "Thermocouple reader fault" shutdown. Increasing
+#   this value provides more tolerance for electromagnetic interference
+#   but may delay detection of genuine sensor failures. The default is 3.
 #spi_bus:
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
