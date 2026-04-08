@@ -58,7 +58,8 @@ class Heater:
         self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
         pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
                                          maxval=self.pwm_delay)
-        self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
+        hardware_pwm = config.getboolean('hardware_pwm', False)
+        self.mcu_pwm.setup_cycle_time(pwm_cycle_time, hardware_pwm)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
