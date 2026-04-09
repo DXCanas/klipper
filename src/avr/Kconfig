@@ -156,13 +156,13 @@ choice
     help
         Select which 16-bit timer to use for Klipper's interrupt scheduling.
 
-        Timer1 (default): Standard choice. Blocks Timer1 pins from hardware PWM.
+        Timer1: Standard choice. Blocks Timer1 pins from hardware PWM.
         Timer5: Frees Timer1 pins (PB5/PB6/PB7) for hardware PWM, blocks Timer5 pins (PL3/PL4/PL5).
 
         Most users should keep Timer1. Choose Timer5 only if you need hardware PWM on Timer1 pins
         (e.g., heaters wired to OC1A/OC1B/OC1C).
     config AVR_SCHED_TIMER_1
-        bool "Timer1 (default)"
+        bool "Timer1"
     config AVR_SCHED_TIMER_5
         bool "Timer5"
 endchoice
